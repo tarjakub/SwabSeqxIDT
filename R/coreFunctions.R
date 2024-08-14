@@ -15,6 +15,7 @@ revcomp=function (x) {    toupper(seqinr::c2s(rev(seqinr::comp(seqinr::s2c(x))))
 #generate expected indices, hard code semi-combinatorial indexing here ---------------------------------------------------
 generateExpectedIndices=function(cfg, diri=NULL) {
     #how to check run chemistry from xml file  ------------------------------------------
+    chemistry=NULL
     if(!is.null(diri)){
     xmlinfo=XML::xmlToList(XML::xmlParse(paste0(diri, '/RunParameters.xml')))
     chemistry=xmlinfo$Chemistry
