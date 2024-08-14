@@ -7,20 +7,21 @@
 #Biobase
 #S4Vectors
 #ggplot 
-
 #optional
 #seqtrie
 
+
+#' @title Reverse complement a sequence
 #' @description `revcomp` returns the reverse complement of a sequence
 #' @param x A character vector
 #' @return reverse complement of x
-#' @export
-revcomp=function (x) {    toupper(seqinr::c2s(rev(seqinr::comp(seqinr::s2c(x)))))}
+revcomp2=function (x) {    toupper(seqinr::c2s(rev(seqinr::comp(seqinr::s2c(x)))))}
 
 
 
 #generate expected indices, hard code semi-combinatorial indexing here ---------------------------------------------------
 
+#' @title Generate expected indices
 #' @description Generate expected i7 and i5 index sequences given indices in plater format
 #' @param cfg A list with i5_plate_key_file and i7_plate_key_file locations
 #' @param diri (optional) directory containing Illumina RunParameters.xml file
@@ -63,12 +64,12 @@ generateExpectedIndices=function(cfg, diri=NULL) {
 
     i7ss$Plate_ID=paste0('Plate', i7ss$Plate_ID)
     i7ss$Sample_ID=paste0(i7ss$Plate_ID,'-', i7ss$Sample_Well)
-    i7ss$index=as.vector(sapply(i7ss$index, revcomp))
+    i7ss$index=as.vector(sapply(i7ss$index, revcomp2))
 
 
     i5ss$Plate_ID=paste0('Plate', i5ss$Plate_ID)
     i5ss$Sample_ID=paste0(i5ss$Plate_ID,'-', i5ss$Sample_Well)
-    if(i5RC.toggle) { i5ss$index2=as.vector(sapply(i5ss$index2, revcomp)) }
+    if(i5RC.toggle) { i5ss$index2=as.vector(sapply(i5ss$index2, revcomp2)) }
 
 
     i5ss= i5ss %>% dplyr::select(Sample_ID, index2)
@@ -77,6 +78,8 @@ generateExpectedIndices=function(cfg, diri=NULL) {
     #----------------------------------------------------------------------------------------------------------------
 }
 
+
+#' @title initialize amplicon count table 
 #' @param index.key index.key from generateExpectedIndices
 #' @param amplicons, a list containing names and expected sequences of amplicons
 #' @return table per amplicon to hold amplicon counts per expected index
@@ -107,6 +110,7 @@ initAmpliconCountTables=function(index.key, amplicons) {
     return(count.tables)
 }
 
+#' @title make all hamming 1 distant sequences for a given sequence 
 #' @param x a sequences
 #' @return the set of all unique hamming distance 1 sequences from a given sequence
 make_hamming1_sequences=function(x) {
@@ -130,6 +134,12 @@ make_hamming1_sequences=function(x) {
     return(eseqs)
 }
 
+#' @title error correct index reads and assign amplicon counts 
+#' @param rid indices of sequences matching an expected amplicon 
+#' @param count.table table per amplicon to hold amplicon counts per expected index
+#' @param ind1 index1 sequences
+#' @param ind2 index2 sequences
+#' @return count.table the set of all unique hamming distance 1 sequences from a given sequence
 errorCorrectIdxAndCountAmplicons=function(rid, count.table, ind1,ind2){
     # get set of unique expected index1 and index2 sequences
     index1=unique(count.table$index)
@@ -200,7 +210,7 @@ seqtrie_match=function(#character vector of observed sequences
                 return(match.df)
             }
 
-
+#' @title Count expected amplicons
 #' @description Count the expected amplicons for the given indices
 #' @param in.con a file connections, for example gzfile
 #' @param index.key a data.table with Plate_ID, Sample_Well, Sample_ID, index, and index2  ... where index is i7 and index2 is i5

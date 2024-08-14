@@ -1,6 +1,6 @@
 library(magrittr)
 dir.path='/home/jbloom/Dropbox/code/SwabSeq_modular/'
-source(paste0(dir.path,'/R/coreFunctions.R'))
+#source(paste0(dir.path,'/R/coreFunctions.R'))
 
 amplicons=list(
             S2=         'TATCTTCAACCTAGGACTTTTCTATT',
