@@ -11,8 +11,21 @@
 #optional
 #seqtrie
 
+#' @description `revcomp` returns the reverse complement of a sequence
+#' @param x A character vector
+#' @return reverse complement of x
+#' @export
 revcomp=function (x) {    toupper(seqinr::c2s(rev(seqinr::comp(seqinr::s2c(x)))))}
+
+
+
 #generate expected indices, hard code semi-combinatorial indexing here ---------------------------------------------------
+
+#' @description Generate expected i7 and i5 index sequences given indices in plater format
+#' @param cfg A list with i5_plate_key_file and i7_plate_key_file locations
+#' @param diri (optional) directory containing Illumina RunParameters.xml file
+#' @return a data.table with Plate_ID, Sample_Well, Sample_ID, index, and index2  ... where index is i7 and index2 is i5
+#' @export
 generateExpectedIndices=function(cfg, diri=NULL) {
     #how to check run chemistry from xml file  ------------------------------------------
     chemistry=NULL
@@ -64,6 +77,9 @@ generateExpectedIndices=function(cfg, diri=NULL) {
     #----------------------------------------------------------------------------------------------------------------
 }
 
+#' @param index.key index.key from generateExpectedIndices
+#' @param amplicons, a list containing names and expected sequences of amplicons
+#' @return table per amplicon to hold amplicon counts per expected index
 initAmpliconCountTables=function(index.key, amplicons) {
     #Munginging sample sheet-------------------------------------------------------------------
     ss=index.key
@@ -91,6 +107,8 @@ initAmpliconCountTables=function(index.key, amplicons) {
     return(count.tables)
 }
 
+#' @param x a sequences
+#' @return the set of all unique hamming distance 1 sequences from a given sequence
 make_hamming1_sequences=function(x) {
     eseq=seqinr::s2c(x)
     eseqs=c(seqinr::c2s(eseq))
@@ -183,12 +201,13 @@ seqtrie_match=function(#character vector of observed sequences
             }
 
 
-#in.con=gzfile('/data0/yeast/shen/bcls9/out/Amplicon71_S8_R1_001.fastq.gz', 'rt')
-
-
-#test=scan(in.con, what='character', sep='\n', n=1000)
-
-
+#' @description Count the expected amplicons for the given indices
+#' @param in.con a file connections, for example gzfile
+#' @param index.key a data.table with Plate_ID, Sample_Well, Sample_ID, index, and index2  ... where index is i7 and index2 is i5
+#' @param amplicons a list of named expected sequences for read 1 amplicons
+#' @param line.buffer an integer specifiying the number of lines to read at once 
+#' @return a list containing `count.tables` for each expected amplicon and `amp.match.summary` the number of reads across the experiment matching each expected amplicon
+#' @export
 countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6) {
 
     #in.con=gzcon(file('/data0/yeast/shen/bcls9/out/Amplicon71_S8_R1_001.fastq.gz', open='rb'))
