@@ -9,5 +9,5 @@ devtools::install_github("joshsbloom/SwabSeqModular" ,ref="main")
 ```
 
 ### Usage
-see [countAmplicons_example.R](examples/countAmplicons_example.R) for example advanced usage
+see [countAmplicons_example.R](examples/countAmplicons_example.R) for example usage
 ___
