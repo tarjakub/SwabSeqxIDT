@@ -1,5 +1,4 @@
-library(magrittr)
-dir.path='/home/jbloom/Dropbox/code/SwabSeq_modular/'
+dir.path='/home/jbloom/Dropbox/code/SwabSeqModular/'
 #source(paste0(dir.path,'/R/coreFunctions.R'))
 
 amplicons=list(
@@ -14,7 +13,7 @@ amplicons=list(
 
 cfg=list()
 cfg$i7_plate_key_file =  paste0(dir.path,"/data/s2_r.csv") #, package="swabseqr")
-cfg$i5_plate_key_file =  paste0(dir.path,,"/data/s2_f.csv") 
+cfg$i5_plate_key_file =  paste0(dir.path,"/data/s2_f.csv") 
 #system.file("keys", "s2_f.csv", package="swabseqr")
 
 index.key=generateExpectedIndices(cfg)
