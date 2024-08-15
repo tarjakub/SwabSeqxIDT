@@ -17,11 +17,24 @@ cfg$i5_plate_key_file =  paste0(dir.path,"/data/s2_f.csv")
 #system.file("keys", "s2_f.csv", package="swabseqr")
 
 index.key=generateExpectedIndices(cfg)
+#head(index.key)
+#   Plate_ID Sample_Well  Sample_ID      index     index2
+#     <char>      <char>     <char>     <char>     <char>
+#1:   Plate1         A01 Plate1-A01 GATACAGATG CAAGTCTCAT
+#2:   Plate1         A02 Plate1-A02 TCTAAGCCTC AGATAGCCTC
+#3:   Plate1         A03 Plate1-A03 GAACGGACAG TCTTCAACGT
+#4:   Plate1         A04 Plate1-A04 ACGATGTTAC CAGAGAATCT
+#5:   Plate1         A05 Plate1-A05 ACCAAGGTGG TCTTGCCGTT
+#6:   Plate1         A06 Plate1-A06 ACTCTTGTAG TTAGATCGCT
 
 in.con=gzfile('/home/jbloom/Dropbox/FileTransfer/swabseq/MINISEQ_Undetermined_S0_R1_001.fastq.gz', 'rt')
 #line.buffer is 4x the number of reads you want to read at a time 
 #use line.buffer to control memory usage 
 countTables=countAmplicons(in.con, index.key, amplicons, line.buffer=1e7)
+
+
+
+
 
 #example visualization 
 x=data.table::rbindlist(countTables$count.tables)
