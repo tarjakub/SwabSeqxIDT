@@ -83,6 +83,7 @@ generateExpectedIndices=function(cfg, diri=NULL) {
 #' @param index.key index.key from generateExpectedIndices
 #' @param amplicons, a list containing names and expected sequences of amplicons
 #' @return table per amplicon to hold amplicon counts per expected index
+#' @export
 initAmpliconCountTables=function(index.key, amplicons) {
     #Munginging sample sheet-------------------------------------------------------------------
     ss=index.key
@@ -90,20 +91,21 @@ initAmpliconCountTables=function(index.key, amplicons) {
 
     # this code would be obviated if indices designate wells, for most analyses here there are different indices for s2/s2spike and rpp30
     # subset of indices for S2/S2 spike
-    if(sum(grepl('-1$', ss$Sample_ID))==0){
-        ssS=ss
-        ssR=ss
-    } else {
-        ssS=ss[grep('-1$', ss$Sample_ID),]
-        #subset of indices for RPP30
-        ssR=ss[grep('-2$', ss$Sample_ID),]
-    }
+#    if(sum(grepl('-1$', ss$Sample_ID))==0){
+#        ssS=ss
+#        ssR=ss
+#    } else {
+#        ssS=ss[grep('-1$', ss$Sample_ID),]
+#        #subset of indices for RPP30
+#        ssR=ss[grep('-2$', ss$Sample_ID),]
+#    }
 
     #initalize output count tables ------------------------------------------------------------
     count.tables=list()
     for(a in names(amplicons)){
-        if(grepl('^S',a)){    count.tables[[a]]=ssS   } 
-        if(grepl('^R',a)){    count.tables[[a]]=ssR   } 
+  #      if(grepl('^S',a)){    count.tables[[a]]=ssS   } 
+  #      if(grepl('^R',a)){    count.tables[[a]]=ssR   } 
+            count.tables[[a]]=ss
             count.tables[[a]]$Count=0
             count.tables[[a]]$amplicon=a
     }
@@ -113,6 +115,7 @@ initAmpliconCountTables=function(index.key, amplicons) {
 #' @title make all hamming 1 distant sequences for a given sequence 
 #' @param x a sequences
 #' @return the set of all unique hamming distance 1 sequences from a given sequence
+#' @export
 make_hamming1_sequences=function(x) {
     eseq=seqinr::s2c(x)
     eseqs=c(seqinr::c2s(eseq))
@@ -140,6 +143,7 @@ make_hamming1_sequences=function(x) {
 #' @param ind1 index1 sequences
 #' @param ind2 index2 sequences
 #' @return count.table the set of all unique hamming distance 1 sequences from a given sequence
+#' @export
 errorCorrectIdxAndCountAmplicons=function(rid, count.table, ind1,ind2){
     # get set of unique expected index1 and index2 sequences
     index1=unique(count.table$index)
