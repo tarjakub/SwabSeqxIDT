@@ -4,7 +4,13 @@
 \alias{countAmplicons}
 \title{Count expected amplicons}
 \usage{
-countAmplicons(in.con, index.key, amplicons, line.buffer = 5e+06)
+countAmplicons(
+  in.con,
+  index.key,
+  amplicons,
+  line.buffer = 5e+06,
+  max.lines = NULL
+)
 }
 \arguments{
 \item{in.con}{a file connections, for example gzfile}
@@ -14,6 +20,8 @@ countAmplicons(in.con, index.key, amplicons, line.buffer = 5e+06)
 \item{amplicons}{a list of named expected sequences for read 1 amplicons}
 
 \item{line.buffer}{an integer specifiying the number of lines to read at once}
+
+\item{max.lines}{an integer specifiying the maximum total number of lines to read for debugging (default=NULL)}
 }
 \value{
 a list containing \code{count.tables} for each expected amplicon and \code{amp.match.summary} the number of reads across the experiment matching each expected amplicon

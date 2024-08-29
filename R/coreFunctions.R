@@ -220,9 +220,10 @@ seqtrie_match=function(#character vector of observed sequences
 #' @param index.key a data.table with Plate_ID, Sample_Well, Sample_ID, index, and index2  ... where index is i7 and index2 is i5
 #' @param amplicons a list of named expected sequences for read 1 amplicons
 #' @param line.buffer an integer specifiying the number of lines to read at once 
+#' @param max.lines an integer specifiying the maximum total number of lines to read for debugging (default=NULL)
 #' @return a list containing `count.tables` for each expected amplicon and `amp.match.summary` the number of reads across the experiment matching each expected amplicon
 #' @export
-countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6) {
+countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=NULL) {
 
     #in.con=gzcon(file('/data0/yeast/shen/bcls9/out/Amplicon71_S8_R1_001.fastq.gz', open='rb'))
     lines_read=0
@@ -246,7 +247,7 @@ countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6) {
         if(lchunk==0) {
             break
         }
-    #    print(paste('Read', lchunk), 'lines'))
+        #    print(paste('Read', lchunk), 'lines'))
         lines_read = lines_read + lchunk
         print(paste('Read', lines_read, 'reads'))
         nlines=seq(1,lchunk) #ength(chunk))
@@ -278,6 +279,15 @@ countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6) {
              count.tables[[a]]= errorCorrectIdxAndCountAmplicons(per.amplicon.row.index[[a]], count.tables[[a]], ind1,ind2)
           }
           gc()
+
+         if(!is.null(max.lines)){
+         if(lines_read >= max.lines) { 
+                 close(in.con)
+                 return(list(count.tables=count.tables,
+                amp.match.summary.table=amp.match.summary.table))
+            }
+          }
+
         }
 
     close(in.con)
