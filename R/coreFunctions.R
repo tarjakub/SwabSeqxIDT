@@ -117,20 +117,27 @@ initAmpliconCountTables=function(index.key, amplicons) {
 #' @return the set of all unique hamming distance 1 sequences from a given sequence
 #' @export
 make_hamming1_sequences=function(x) {
-    eseq=seqinr::s2c(x)
-    eseqs=c(seqinr::c2s(eseq))
+    #eseq=seqinr::s2c(x)
+    eseq= base::strsplit(x, '')[[1]]
+    #eseqs=c(seqinr::c2s(eseq))
+    eseqs=x
     for(i in 1:length(eseq)){
         eseq2=eseq
         eseq2[i]='A'
-        eseqs=c(eseqs,seqinr::c2s(eseq2))
+        eseqs=c(eseqs,paste0(eseq2, collapse=''))
+        #eseqs=c(eseqs,seqinr::c2s(eseq2))
         eseq2[i]='C'
-        eseqs=c(eseqs,seqinr::c2s(eseq2))
+        eseqs=c(eseqs,paste0(eseq2, collapse=''))
+        #eseqs=c(eseqs,seqinr::c2s(eseq2))
         eseq2[i]='T'
-        eseqs=c(eseqs,seqinr::c2s(eseq2))
+        eseqs=c(eseqs,paste0(eseq2, collapse=''))
+        #eseqs=c(eseqs,seqinr::c2s(eseq2))
         eseq2[i]='G'
-        eseqs=c(eseqs,seqinr::c2s(eseq2))
+        eseqs=c(eseqs,paste0(eseq2, collapse=''))
+        #eseqs=c(eseqs,seqinr::c2s(eseq2))
         eseq2[i]='N'
-        eseqs=c(eseqs,seqinr::c2s(eseq2))
+        eseqs=c(eseqs,paste0(eseq2, collapse=''))
+       # eseqs=c(eseqs,seqinr::c2s(eseq2))
 
     }
     eseqs=unique(eseqs)
@@ -221,9 +228,10 @@ seqtrie_match=function(#character vector of observed sequences
 #' @param amplicons a list of named expected sequences for read 1 amplicons
 #' @param line.buffer an integer specifiying the number of lines to read at once 
 #' @param max.lines an integer specifiying the maximum total number of lines to read for debugging (default=NULL)
+#' @param nthreads an integer specifiying the maximum number of threads (default=1)
 #' @return a list containing `count.tables` for each expected amplicon and `amp.match.summary` the number of reads across the experiment matching each expected amplicon
 #' @export
-countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=NULL) {
+countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=NULL,nthreads=1) {
 
     #in.con=gzcon(file('/data0/yeast/shen/bcls9/out/Amplicon71_S8_R1_001.fastq.gz', open='rb'))
     lines_read=0
@@ -242,7 +250,6 @@ countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=
 
     while(TRUE) {
         chunk=readLines(in.con, n=line.buffer)
-
         lchunk=length(chunk)/4
         if(lchunk==0) {
             break
@@ -252,10 +259,15 @@ countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=
         print(paste('Read', lines_read, 'reads'))
         nlines=seq(1,lchunk) #ength(chunk))
         nmod4=nlines%%4
-        
+
         header=chunk[nmod4==1]
-        ind1=stringfish::sf_gsub(header, ".*(.{10})\\+(.{10})$", "$1")
-        ind2=stringfish::sf_gsub(header, ".*(.{10})\\+(.{10})$", "$2")
+        if(nthreads>1) {
+            tmp=stringfish::sf_gsub(header,  ".*:", "", nthreads=nthreads)
+        } else {
+            tmp=gsub( ".*:", "", header, perl=T)
+        }
+        ind1=substring(tmp,1,10)
+        ind2=substring(tmp,12,21)
         rd1=chunk[nmod4==2]
 
          # match amplicons
@@ -273,12 +285,12 @@ countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=
          #convert to indices
          per.amplicon.row.index=lapply(names(amplicons), function(x) which(amp.match==x))
          names(per.amplicon.row.index)=names(amplicons)
+        #2seconds
 
          #for each amplicon of interest count up reads where indices match expected samples
          for(a in names(count.tables)){
              count.tables[[a]]= errorCorrectIdxAndCountAmplicons(per.amplicon.row.index[[a]], count.tables[[a]], ind1,ind2)
           }
-          gc()
 
          if(!is.null(max.lines)){
          if(lines_read >= max.lines) { 

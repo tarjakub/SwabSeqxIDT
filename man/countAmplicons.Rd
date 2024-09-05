@@ -9,7 +9,8 @@ countAmplicons(
   index.key,
   amplicons,
   line.buffer = 5e+06,
-  max.lines = NULL
+  max.lines = NULL,
+  nthreads = 1
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ countAmplicons(
 \item{line.buffer}{an integer specifiying the number of lines to read at once}
 
 \item{max.lines}{an integer specifiying the maximum total number of lines to read for debugging (default=NULL)}
+
+\item{nthreads}{an integer specifiying the maximum number of threads (default=1)}
 }
 \value{
 a list containing \code{count.tables} for each expected amplicon and \code{amp.match.summary} the number of reads across the experiment matching each expected amplicon
