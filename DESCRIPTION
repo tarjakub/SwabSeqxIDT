@@ -16,18 +16,18 @@ RoxygenNote: 7.3.2
 Depends:
     R(>= 3.5.0)
 Imports:
-    seqinr,
-    XML,
-    plater,
     dplyr,
     tidyr,
     data.table,
     Biobase,
     S4Vectors,
     magrittr,
-    seqtrie,
     stringfish 
 Suggests:
+    XML,
+    seqinr,
+    plater,
+    seqtrie,
     devtools,
     roxygen2,
     ggplot2,
