@@ -1,47 +1,50 @@
-setwd('~/.basespace/')
+library(SwabSeqModular)
+#install.packages('readxl')
+library(readxl)
+#if Biostrings isn't installed
+#install.packages("BiocManager")
+#BiocManager::install("Biostrings")
+library(Biostrings)
+#conda-forge ggplot2 is broken, need to install scales package manually 
+#install.packages('scales')
+library(ggplot2)
+
+#local-----------------------
+#setwd('~/.basespace/')
+#system(paste0('bs -c swabseqPersonal.cfg list runs'))
+#runID='284756474'
+#bcl.save.dir='/data3/swabseq/240827/'
+#dir.create(bcl.save.dir)
+#status=system(paste0("bs -c swabseqPersonal.cfg  download run --id ", runID, " -o ", bcl.save.dir))
+#setwd(bcl.save.dir)
+#sampleSheet=paste0(bcl.save.dir, 'SampleSheet.csv')
+#status=as.character(system(paste("bcl-convert --bcl-input-directory . --output-directory out/ --strict-mode false --no-lane-splitting true --force --sample-sheet", sampleSheet),intern=F))
+#path.to.index='/home/jbloom/Dropbox/code/SwabSeqModular/projects/240827_swabseqv1test_TJ/'
+
+# hoffman2 -----------------------------------------------------
+# so far the gotchas I've seen are that you need to put bs and bcl-convert in your PATH
+# the basespace cli config file needs to be in the ~/.basespace directory or it can't be read ...
+# also you need to edit your sample sheet to have it listed as index instead of index1
+setwd('/u/home/j/jsbloom/.basespace/')
 system(paste0('bs -c swabseqPersonal.cfg list runs'))
 runID='284756474'
-bcl.save.dir='/data3/swabseq/240827/'
+bcl.save.dir='/u/home/j/jsbloom/scratch/swabseq/240827/'
 dir.create(bcl.save.dir)
 status=system(paste0("bs -c swabseqPersonal.cfg  download run --id ", runID, " -o ", bcl.save.dir))
 setwd(bcl.save.dir)
 sampleSheet=paste0(bcl.save.dir, 'SampleSheet.csv')
 status=as.character(system(paste("bcl-convert --bcl-input-directory . --output-directory out/ --strict-mode false --no-lane-splitting true --force --sample-sheet", sampleSheet),intern=F))
 
-
-
-library(SwabSeqModular)
-library(readxl)
-path.to.index='/home/jbloom/Dropbox/code/SwabSeqModular/projects/240827_swabseqv1test_TJ/'
+path.to.index='/u/home/j/jsbloom/project-kruglyak/swabseq/SwabSeqModular/projects/240827_swabseqv1test_TJ/'
 index.key=read_excel(paste0(path.to.index, 'SwabSeqV1_Index.xlsx'))
 names(index.key)[4:5]=c('index', 'index2')
 
 index.key=index.key[,c(1,2,3,5,4)]
 names(index.key)[4:5]=c('index', 'index2')
 
-library(Biostrings)
-
 index.key$index=as.character(Biostrings::reverseComplement(Biostrings::DNAStringSet(index.key$index)))
 index.key$index2=as.character(Biostrings::reverseComplement(Biostrings::DNAStringSet(index.key$index2)))
     
-
-#amplicons=list(
-#S2 =          'TATCTTCAACCTAGGACTTTTCTATT',
-#S2_spike000=  'ATAGAACAACCTAGGACTTTTCTATT',
-#S2_spike001=  'GTGTATCTCACGAAGCGACCCTTTGG',
-#S2_spike002=  'CCTCGCTAGGACGTCGCTATGACGCC',
-#S2_spike003=  'AGCACGACTTGATCTAACTGACACTA',
-#S2_spike004=  'TAAGTAGGACTTCGATTGGATGGAAT',
-#RPP30=        'TCTGACCTGAAGGCTCTGCGCGGACT', #CTCTGACCTGAAGGCTCTGCGCGGAC',
-#N=            'CCCCGCATTACGTTTGGTGGACCCTC',
-#N_spike000=   'GGGGCGTAATGCAAACCACCTGGCTC',
-#fluA=         'TCGCTCACTTGGCACGGTGAGCGTGA',
-#fluA_rc=      'TCACGCTCACCGTGCCAAGTGAGCGA',
-#fluA_spike000='AGCGAGTGAACCGTGCCACTCGCACT',
-#fluA_spike000rc='AGTGCGAGTGGCACGGTTCACTCGCT',
-#fluB=          'ACTCTTCGAGCGTTTTGATGAAGGAC',
-#fluB_spike000='TGAGAAGCTCGCAAAACTACTTCCTG')
-
 amplicons=list(
   S2 =          'TATCTTCAACCTAGGACTTTTCTATT',
   S2_spike000=  'ATAGAACAACCTAGGACTTTTCTATT',
@@ -63,15 +66,15 @@ in.con=gzfile(paste0(bcl.save.dir, 'out/Undetermined_S0_R1_001.fastq.gz'), 'rt')
 #use line.buffer to control memory usage 
 #load everything
 #note, running this function closes the connection in.con
-in.con=file(paste0(bcl.save.dir, 'out/Undetermined_S0_R1_001.fastq'), 'rt')
+#in.con=file(paste0(bcl.save.dir, 'out/Undetermined_S0_R1_001.fastq'), 'rt')
 
 system.time({
-countTables=countAmplicons(in.con, index.key, amplicons, line.buffer=5e7, nthreads=1)
+countTables=countAmplicons(in.con, index.key, amplicons, line.buffer=5e7, nthreads=4)
 })
 saveRDS(countTables, file = '/home/jbloom/Dropbox/code/SwabSeqModular/projects/240827_swabseqv1test_TJ/countTables.RDS')
 
-#for debugging, load first 1e6 reads only
-countTables2=countAmplicons(in.con, index.key, amplicons, line.buffer=4e6, max.lines=1e6, nthreads=4)
+#for debugging, load first 10e6 reads only for example
+countTables2=countAmplicons(in.con, index.key, amplicons, line.buffer=40e6/4, max.lines=10e6/4, nthreads=4)
 
 x=data.table::rbindlist(countTables2$count.tables)
 x$Col=as.factor(gsub('^.', '', x$Sample_Well))
