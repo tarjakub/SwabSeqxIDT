@@ -261,6 +261,7 @@ countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=
         nmod4=nlines%%4
 
         header=chunk[nmod4==1]
+        rd1 <- chunk[nmod4==2]
         tmp <- {
             if(nthreads > 1) {
                 stringfish::sf_gsub(header, ".*:", "", nthreads = nthreads)
