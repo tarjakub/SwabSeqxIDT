@@ -1,5 +1,5 @@
-Package: SwabSeqModular
-Title: Modular SwabSeq analysis
+Package: SwabSeqxIDT
+Title: SwabSeqxIDT analysis
 Version: 0.1
 Authors@R: 
     person(given = "Joshua",
@@ -33,4 +33,4 @@ Suggests:
     ggplot2,
     knitr
 VignetteBuilder: knitr
-URL: https://github.com/joshsbloom/SwabSeqModular
+URL: https://github.com/tarjakub/SwabSeqxIDT/
