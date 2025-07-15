@@ -231,7 +231,7 @@ seqtrie_match=function(#character vector of observed sequences
 #' @param nthreads an integer specifiying the maximum number of threads (default=1)
 #' @return a list containing `count.tables` for each expected amplicon and `amp.match.summary` the number of reads across the experiment matching each expected amplicon
 #' @export
-countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=NULL,nthreads=1) {
+countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), line.buffer=5e6,max.lines=NULL,nthreads=1) {
 
     #in.con=gzcon(file('/data0/yeast/shen/bcls9/out/Amplicon71_S8_R1_001.fastq.gz', open='rb'))
     lines_read=0
@@ -272,8 +272,8 @@ countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=
         
         parts <- strsplit(tmp, "\\+", perl=TRUE)
         
-        ind1 <- vapply(parts, `[`, FUN.VALUE=character(1), 1)
-        ind2 <- vapply(parts, `[`, FUN.VALUE=character(1), 2)
+        ind1 <- vapply(parts, `[`, FUN.VALUE=character(1), barcode.fields[1])
+        ind2 <- vapply(parts, `[`, FUN.VALUE=character(1), barcode.fields[2])
 
          # match amplicons
          # strategy here is better than reliance on helper functions from stringdist package
