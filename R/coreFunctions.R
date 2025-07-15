@@ -280,14 +280,25 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
         # match amplicons
         # strategy here is better than reliance on helper functions from stringdist package
         reads_dna <-Biostrings::DNAStringSet(rd1)
-        hits <- Biostrings::vcountPattern(patterns_dna, reads_dna,
-                              max.mismatch = 1, fixed = TRUE)
-        amp.match <- apply(hits, 2, function(col) {  
-            i <- which(col>0)  
-            if (length(i)==0) return(NA_character_)  
-            amph1.indices[i[1]]  
-        }) 
-    
+        hits_mat <- vapply(
+            seq_along(patterns_dna),
+            function(j) {
+                Biostrings::vcountPattern(
+                    patterns_dna[j],
+                    reads_dna,
+                    max.mismatch = 1,
+                    fixed = TRUE
+                ) > 0
+            },
+            logical(length(reads_dna))
+        )
+
+        amp.match <- apply(hits_mat, 1, function(row) {
+            k <- which(row)
+            if (length(k)==0) return(NA_character_)
+            amph1.indices[k[1]]
+        })
+        
         no_align=sum(is.na(amp.match))
 
         #summarize amplicon matches
