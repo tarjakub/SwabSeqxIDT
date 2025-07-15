@@ -283,7 +283,7 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
         hits <- Biostrings::vcountPattern(patterns_dna, reads_dna,
                               max.mismatch = 1, fixed = TRUE)
         amp.match <- apply(hits, 2, function(col) {  
-            idx <- which(col>0)  
+            i <- which(col>0)  
             if (length(i)==0) return(NA_character_)  
             amph1.indices[i[1]]  
         }) 
