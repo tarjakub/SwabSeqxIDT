@@ -262,6 +262,7 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
 
         header=chunk[nmod4==1]
         rd1 <- chunk[nmod4==2]
+        
         tmp <- {
             if(nthreads > 1) {
                 stringfish::sf_gsub(header, ".*:", "", nthreads = nthreads)
@@ -275,35 +276,43 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
         ind1 <- vapply(parts, `[`, FUN.VALUE=character(1), barcode.fields[1])
         ind2 <- vapply(parts, `[`, FUN.VALUE=character(1), barcode.fields[2])
 
-         # match amplicons
-         # strategy here is better than reliance on helper functions from stringdist package
-         amp.match=amph1.indices[S4Vectors::match(rd1, amph1.elements)]
-         no_align=sum(is.na(amp.match))
+        # match amplicons
+        # strategy here is better than reliance on helper functions from stringdist package
+        reads_dna <-Biostrings::DNAStringSet(rd1)
+        hits <- Biostrings::vcountPattern(amph1.elements, reads_dna,
+                              max.mismatch = 1, fixed = TRUE)
+        amp.match <- apply(hits, 2, function(col) {  
+            idx <- which(col>0)  
+            if (length(i)==0) return(NA_character_)  
+            amph1.indices[i[1]]  
+        }) 
+    
+        no_align=sum(is.na(amp.match))
 
-         #summarize amplicon matches
-         amp.match.summary=table(amp.match)
-         amp.match.summary=amp.match.summary[match(names(amplicons),names(amp.match.summary))]
-         amp.match.summary=c(amp.match.summary, no_align)
-         names(amp.match.summary) <- c(names(amp.match.summary[-length(amp.match.summary)]),"no_align")
-         amp.match.summary.table=amp.match.summary.table+amp.match.summary
+        #summarize amplicon matches
+        amp.match.summary=table(amp.match)
+        amp.match.summary=amp.match.summary[match(names(amplicons),names(amp.match.summary))]
+        amp.match.summary=c(amp.match.summary, no_align)
+        names(amp.match.summary) <- c(names(amp.match.summary[-length(amp.match.summary)]),"no_align")
+        amp.match.summary.table=amp.match.summary.table+amp.match.summary
 
-         #convert to indices
-         per.amplicon.row.index=lapply(names(amplicons), function(x) which(amp.match==x))
-         names(per.amplicon.row.index)=names(amplicons)
+        #convert to indices
+        per.amplicon.row.index=lapply(names(amplicons), function(x) which(amp.match==x))
+        names(per.amplicon.row.index)=names(amplicons)
         #2seconds
 
-         #for each amplicon of interest count up reads where indices match expected samples
-         for(a in names(count.tables)){
-             count.tables[[a]]= errorCorrectIdxAndCountAmplicons(per.amplicon.row.index[[a]], count.tables[[a]], ind1,ind2)
-          }
+        #for each amplicon of interest count up reads where indices match expected samples
+        for(a in names(count.tables)){
+            count.tables[[a]]= errorCorrectIdxAndCountAmplicons(per.amplicon.row.index[[a]], count.tables[[a]], ind1,ind2)
+        }
 
-         if(!is.null(max.lines)){
-         if(lines_read >= max.lines) { 
-                 close(in.con)
-                 return(list(count.tables=count.tables,
-                amp.match.summary.table=amp.match.summary.table))
+        if(!is.null(max.lines)){
+        if(lines_read >= max.lines) { 
+                close(in.con)
+                return(list(count.tables=count.tables,
+            amp.match.summary.table=amp.match.summary.table))
             }
-          }
+        }
 
         }
 
