@@ -255,9 +255,9 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
         #    print(paste('Read', lchunk), 'lines'))
         lines_read = lines_read + lchunk
         print(paste('Read', lines_read, 'reads'))
-        nlines=seq(1,lchunk) #ength(chunk))
-        nmod4=nlines%%4
-
+        
+        nlines = seq_along(chunk)
+        nmod4 = nlines %% 4
         header=chunk[nmod4==1]
         rd1 <- chunk[nmod4==2]
         
