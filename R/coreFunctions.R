@@ -246,6 +246,7 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
     amph1=lapply(amplicons, make_hamming1_sequences)
     amph1=Biobase::reverseSplit(amph1)
     amph1.elements=names(amph1)
+    patterns_dna <- Biostrings::DNAStringSet(amph1.elements)
     amph1.indices=as.vector(unlist(amph1))
 
     while(TRUE) {
@@ -279,7 +280,7 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
         # match amplicons
         # strategy here is better than reliance on helper functions from stringdist package
         reads_dna <-Biostrings::DNAStringSet(rd1)
-        hits <- Biostrings::vcountPattern(amph1.elements, reads_dna,
+        hits <- Biostrings::vcountPattern(patterns_dna, reads_dna,
                               max.mismatch = 1, fixed = TRUE)
         amp.match <- apply(hits, 2, function(col) {  
             idx <- which(col>0)  
