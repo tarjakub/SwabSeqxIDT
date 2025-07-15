@@ -243,12 +243,9 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
     names(amp.match.summary.table)=c(names(amplicons),'no_align')
 
     #expected amplicons with seq errors 
-    amph1=lapply(amplicons, make_hamming1_sequences)
-    amph1=Biobase::reverseSplit(amph1)
-    amph1.elements=names(amph1)
-    patterns_dna <- Biostrings::DNAStringSet(amph1.elements)
-    amph1.indices=as.vector(unlist(amph1))
-
+    patterns <- Biostrings::DNAStringSet(amplicons)
+    names(patterns) <- names(amplicons)
+    
     while(TRUE) {
         chunk=readLines(in.con, n=line.buffer)
         lchunk=length(chunk)/4
@@ -280,24 +277,20 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
         # match amplicons
         # strategy here is better than reliance on helper functions from stringdist package
         reads_dna <-Biostrings::DNAStringSet(rd1)
-        hits_mat <- vapply(
-            seq_along(patterns_dna),
-            function(j) {
-                Biostrings::vcountPattern(
-                    patterns_dna[j],
-                    reads_dna,
-                    max.mismatch = 1,
-                    fixed = TRUE
-                ) > 0
-            },
-            logical(length(reads_dna))
-        )
+        amp.match <- rep(NA_character_, length(rd1))
 
-        amp.match <- apply(hits_mat, 1, function(row) {
-            k <- which(row)
-            if (length(k)==0) return(NA_character_)
-            amph1.indices[k[1]]
-        })
+        for (a in names(patterns)) {
+        # countPattern returns #matches per read
+            hit.vec <- Biostrings::vcountPattern(
+            patterns[[a]],
+            reads_dna,
+            max.mismatch = 1,
+            fixed        = TRUE
+          ) > 0
+     
+            # assign any yet-unassigned read matching this amplicon
+          amp.match[is.na(amp.match) & hit.vec] <- a
+        }
         
         no_align=sum(is.na(amp.match))
 
