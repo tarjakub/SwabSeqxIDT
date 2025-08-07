@@ -244,7 +244,7 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
 
     #expected amplicons with seq errors 
     patterns <- Biostrings::DNAStringSet(amplicons)
-    names(patterns) <- names(amplicons)
+    pdict <- Biostrings::PDict(patterns, max.mismatch = 1)
     
     while(TRUE) {
         chunk=readLines(in.con, n=line.buffer)
@@ -274,25 +274,25 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
         ind1 <- vapply(parts, `[`, FUN.VALUE=character(1), barcode.fields[1])
         ind2 <- vapply(parts, `[`, FUN.VALUE=character(1), barcode.fields[2])
 
+        # collapse duplicate reads
+        tbl <- table(rd1)
+        uniques <- names(tbl)
+        counts_per_unique <- as.integer(tbl)
+        reads_unique <- Biostrings::DNAStringSet(uniques)
+        
         # match amplicons
         # strategy here is better than reliance on helper functions from stringdist package
-        reads_dna <-Biostrings::DNAStringSet(rd1)
-        amp.match <- rep(NA_character_, length(rd1))
+        counts_mat <- vcountPDict(pdict, reads_unique, collapse = FALSE)
+        match_idx <- apply(counts_mat > 0, 2, function(col) {
+            if (any(col)) {
+                return(names(amplicons)[which(col)[1]])
+            } else {
+                return(NA_character_)
+            }
+        })
 
-        for (a in names(patterns)) {
-        # countPattern returns #matches per read
-            hit.vec <- Biostrings::vcountPattern(
-            patterns[[a]],
-            reads_dna,
-            max.mismatch = 1,
-            fixed        = TRUE
-          ) > 0
-     
-            # assign any yet-unassigned read matching this amplicon
-          amp.match[is.na(amp.match) & hit.vec] <- a
-        }
-        
-        no_align=sum(is.na(amp.match))
+        amp.match <- rep(match_idx, times = counts_per_unique)
+        no_align <- sum(is.na(amp.match))
 
         #summarize amplicon matches
         amp.match.summary=table(amp.match)
