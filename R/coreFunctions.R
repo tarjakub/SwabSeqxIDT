@@ -1,3 +1,4 @@
+
 #seqinr
 #XML
 #plater
@@ -231,7 +232,7 @@ seqtrie_match=function(#character vector of observed sequences
 #' @param nthreads an integer specifiying the maximum number of threads (default=1)
 #' @return a list containing `count.tables` for each expected amplicon and `amp.match.summary` the number of reads across the experiment matching each expected amplicon
 #' @export
-countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), line.buffer=5e6,max.lines=NULL,nthreads=1) {
+countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=NULL,nthreads=1) {
 
     #in.con=gzcon(file('/data0/yeast/shen/bcls9/out/Amplicon71_S8_R1_001.fastq.gz', open='rb'))
     lines_read=0
@@ -243,9 +244,11 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
     names(amp.match.summary.table)=c(names(amplicons),'no_align')
 
     #expected amplicons with seq errors 
-    patterns <- Biostrings::DNAStringSet(amplicons)
-    pdict <- Biostrings::PDict(patterns, max.mismatch = 1)
-    
+    amph1=lapply(amplicons, make_hamming1_sequences)
+    amph1=Biobase::reverseSplit(amph1)
+    amph1.elements=names(amph1)
+    amph1.indices=as.vector(unlist(amph1))
+
     while(TRUE) {
         chunk=readLines(in.con, n=line.buffer)
         lchunk=length(chunk)/4
@@ -255,69 +258,48 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
         #    print(paste('Read', lchunk), 'lines'))
         lines_read = lines_read + lchunk
         print(paste('Read', lines_read, 'reads'))
-        
-        nlines = seq_along(chunk)
-        nmod4 = nlines %% 4
+        nlines=seq(1,lchunk) #ength(chunk))
+        nmod4=nlines%%4
+
         header=chunk[nmod4==1]
-        rd1 <- chunk[nmod4==2]
-        
-        tmp <- {
-            if(nthreads > 1) {
-                stringfish::sf_gsub(header, ".*:", "", nthreads = nthreads)
-            } else {
-                gsub(".*:", "", header, perl=TRUE)
-            }
+        if(nthreads>1) {
+            tmp=stringfish::sf_gsub(header,  ".*:", "", nthreads=nthreads)
+        } else {
+            tmp=gsub( ".*:", "", header, perl=T)
         }
-        
-        parts <- strsplit(tmp, "\\+", perl=TRUE)
-        
-        ind1 <- vapply(parts, `[`, FUN.VALUE=character(1), barcode.fields[1])
-        ind2 <- vapply(parts, `[`, FUN.VALUE=character(1), barcode.fields[2])
+        ind1=substring(tmp,1,10)
+        ind2=substring(tmp,12,21)
+        rd1=chunk[nmod4==2]
 
-        # collapse duplicate reads
-        tbl <- table(rd1)
-        uniques <- names(tbl)
-        counts_per_unique <- as.integer(tbl)
-        reads_unique <- Biostrings::DNAStringSet(uniques)
-        
-        # match amplicons
-        # strategy here is better than reliance on helper functions from stringdist package
-        counts_mat <- vcountPDict(pdict, reads_unique, collapse = FALSE)
-        match_idx <- apply(counts_mat > 0, 2, function(col) {
-            if (any(col)) {
-                return(names(amplicons)[which(col)[1]])
-            } else {
-                return(NA_character_)
-            }
-        })
+         # match amplicons
+         # strategy here is better than reliance on helper functions from stringdist package
+         amp.match=amph1.indices[S4Vectors::match(rd1, amph1.elements)]
+         no_align=sum(is.na(amp.match))
 
-        amp.match <- rep(match_idx, times = counts_per_unique)
-        no_align <- sum(is.na(amp.match))
+         #summarize amplicon matches
+         amp.match.summary=table(amp.match)
+         amp.match.summary=amp.match.summary[match(names(amplicons),names(amp.match.summary))]
+         amp.match.summary=c(amp.match.summary, no_align)
+         names(amp.match.summary) <- c(names(amp.match.summary[-length(amp.match.summary)]),"no_align")
+         amp.match.summary.table=amp.match.summary.table+amp.match.summary
 
-        #summarize amplicon matches
-        amp.match.summary=table(amp.match)
-        amp.match.summary=amp.match.summary[match(names(amplicons),names(amp.match.summary))]
-        amp.match.summary=c(amp.match.summary, no_align)
-        names(amp.match.summary) <- c(names(amp.match.summary[-length(amp.match.summary)]),"no_align")
-        amp.match.summary.table=amp.match.summary.table+amp.match.summary
-
-        #convert to indices
-        per.amplicon.row.index=lapply(names(amplicons), function(x) which(amp.match==x))
-        names(per.amplicon.row.index)=names(amplicons)
+         #convert to indices
+         per.amplicon.row.index=lapply(names(amplicons), function(x) which(amp.match==x))
+         names(per.amplicon.row.index)=names(amplicons)
         #2seconds
 
-        #for each amplicon of interest count up reads where indices match expected samples
-        for(a in names(count.tables)){
-            count.tables[[a]]= errorCorrectIdxAndCountAmplicons(per.amplicon.row.index[[a]], count.tables[[a]], ind1,ind2)
-        }
+         #for each amplicon of interest count up reads where indices match expected samples
+         for(a in names(count.tables)){
+             count.tables[[a]]= errorCorrectIdxAndCountAmplicons(per.amplicon.row.index[[a]], count.tables[[a]], ind1,ind2)
+          }
 
-        if(!is.null(max.lines)){
-        if(lines_read >= max.lines) { 
-                close(in.con)
-                return(list(count.tables=count.tables,
-            amp.match.summary.table=amp.match.summary.table))
+         if(!is.null(max.lines)){
+         if(lines_read >= max.lines) { 
+                 close(in.con)
+                 return(list(count.tables=count.tables,
+                amp.match.summary.table=amp.match.summary.table))
             }
-        }
+          }
 
         }
 
@@ -326,5 +308,3 @@ countAmplicons=function(in.con, index.key, amplicons, barcode.fields = c(1, 2), 
     return(list(count.tables=count.tables,
                 amp.match.summary.table=amp.match.summary.table))
 }
-
-
