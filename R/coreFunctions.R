@@ -261,14 +261,21 @@ countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=
         nlines=seq(1,lchunk) #ength(chunk))
         nmod4=nlines%%4
 
-        header=chunk[nmod4==1]
-        if(nthreads>1) {
-            tmp=stringfish::sf_gsub(header,  ".*:", "", nthreads=nthreads)
+        last_field <- if (nthreads > 1) {
+          stringfish::sf_gsub(header, ".*:", "", nthreads = nthreads)
         } else {
-            tmp=gsub( ".*:", "", header, perl=T)
+          gsub(".*:", "", header, perl = TRUE)
         }
-        ind1=substring(tmp,1,10)
-        ind2=substring(tmp,12,21)
+        
+        sp <- strsplit(last_field, "\\+")
+        ind_mat <- t(vapply(
+          sp,
+          function(x) if (length(x) >= 2) x[1:2] else c(NA_character_, NA_character_),
+          FUN.VALUE = character(2)
+        ))
+        ind1 <- ind_mat[, 1]
+        ind2 <- ind_mat[, 2]
+        
         rd1=chunk[nmod4==2]
 
          # match amplicons
