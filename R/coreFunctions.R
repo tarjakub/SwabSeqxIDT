@@ -258,10 +258,11 @@ countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=
         #    print(paste('Read', lchunk), 'lines'))
         lines_read = lines_read + lchunk
         print(paste('Read', lines_read, 'reads'))
-        nlines=seq(1,lchunk) #ength(chunk))
-        nmod4=nlines%%4
 
-        header=chunk[nmod4==1]
+        nmod4 <- seq_along(chunk) %% 4L   # modulo over ALL LINES in the chunk
+        rd1    <- chunk[nmod4 == 2L] 
+
+        header=chunk[nmod4==1L]
         if(nthreads>1) {
             tmp=stringfish::sf_gsub(header,  ".*:", "", nthreads=nthreads)
         } else {
@@ -269,7 +270,6 @@ countAmplicons=function(in.con, index.key, amplicons, line.buffer=5e6,max.lines=
         }
         ind1=substring(tmp,1,8)
         ind2=substring(tmp,10,17)
-        rd1=chunk[nmod4==2]
 
          # match amplicons
          # strategy here is better than reliance on helper functions from stringdist package
